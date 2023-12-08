@@ -1,50 +1,58 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
 
 # Загрузка данных
-df = pd.read_csv("../Hostel.csv")
-df = df.fillna(0)
+data = pd.read_csv("../Hostel.csv")
 
 # Выбор нужных признаков
-features = ['summary.score', 'atmosphere', 'cleanliness', 'facilities', 'staff', 'valueformoney']
-target = 'price.from'
+features = ['price.from', 'Distance', 'atmosphere', 'cleanliness', 'facilities']
+
+# Очистка данных и заполнение пропущенных значений
+data['Distance'] = data['Distance'].str.replace('km from city centre', '').astype(float)
+data['summary.score'] = data['summary.score'].fillna(data['summary.score'].mean())
+
+# Заполнение пропущенных значений (например, средними)
+data[features] = data[features].fillna(data[features].mean())
 
 # Разделение данных на обучающий и тестовый наборы
-X = df[features]
-y = df[target]
+X = data[features]
+y = data['summary.score']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.01, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Масштабирование данных (стандартизация)
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# Обучение модели RandomForestRegressor
-rf_regressor = RandomForestRegressor(n_estimators=100, random_state=42)
-rf_regressor.fit(X_train_scaled, y_train)
+# Обучение модели Лассо-регрессии
+alpha = 0.1  # параметр регуляризации
+lasso = Lasso(alpha=alpha)
+lasso.fit(X_train_scaled, y_train)
 
 # Предсказание на тестовом наборе
-y_pred_rf = rf_regressor.predict(X_test_scaled)
+y_pred = lasso.predict(X_test_scaled)
 
-# Оценка качества модели RandomForestRegressor
-mse_rf = mean_squared_error(y_test, y_pred_rf)
-accuracy_rf = 1 - mse_rf / y_test.var()
+# Оценка качества модели
+mse = mean_squared_error(y_test, y_pred)
+accuracy = 1 - mse / y_test.var()
 
-# Вывод результатов
-print("Тестируемые строки:")
-print(X_test)
+# Вывод точности модели
+print(f"\nТочность модели: {accuracy * 100:.2f}%")
+# Оценка качества модели
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
 
-# Вывод точности модели RandomForestRegressor
-print(f"\nТочность модели RandomForestRegressor: {accuracy_rf * 100:.2f}%")
-importances = rf_regressor.feature_importances_
-normalized_importances = importances / importances.sum()
+# Печать трех лучших показателей
+coef_dict = {}
+for coef, feat in zip(lasso.coef_, features):
+    coef_dict[feat] = coef
 
-# Выбор трёх наиболее важных признаков
-top_importances = normalized_importances.argsort()[-3:][::-1]
+sorted_coef = sorted(coef_dict.items(), key=lambda x: abs(x[1]), reverse=True)
+
 print("\nТри наиболее важных признака:")
-for idx in top_importances:
-    print(f"{features[idx]}: {normalized_importances[idx]}")
+for feature, coef in sorted_coef[:3]:
+    print(f"{feature}: {coef}")

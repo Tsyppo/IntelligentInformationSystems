@@ -4,14 +4,18 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error
 
 # Загрузка данных
-df = pd.read_csv("../Hostel.csv")
-df = df.fillna(0)
-# Разделение данных
-train_data, test_data = train_test_split(df, test_size=0.01, random_state=42)
+data = pd.read_csv("../Hostel.csv")
 
-# Обучение модели
-features = ['summary.score', 'atmosphere', 'cleanliness', 'facilities', 'staff', 'valueformoney']
-target = 'price.from'
+features = ['price.from', 'Distance', 'atmosphere', 'cleanliness', 'facilities']
+
+# Очистка данных и заполнение пропущенных значений
+data['Distance'] = data['Distance'].str.replace('km from city centre', '').astype(float)
+data['summary.score'] = data['summary.score'].fillna(data['summary.score'].mean())
+target = 'summary.score'
+data[features] = data[features].fillna(data[features].mean())
+
+# Разделение данных
+train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
 
 X_train = train_data[features]
 y_train = train_data[target]
@@ -25,9 +29,6 @@ y_test = test_data[target]
 
 predictions = model.predict(X_test)
 
-# Вывод результатов
-print("Тестируемые строки:")
-print(X_test)
 # Точность на основе средней квадратной ошибке (MSE)
 mse = mean_squared_error(y_test, predictions)
 accuracy = 1 - mse / y_test.var()
