@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 data = pd.read_csv("../Hostel.csv")
 data['Distance'] = data['Distance'].str.replace('km from city centre', '').astype(float)
 
-# Выберите признаки для кластеризации
+
 features = data[['Distance', 'summary.score', 'cleanliness', 'facilities', 'location.y', 'security', 'staff',
                  'valueformoney']]
 

@@ -1,44 +1,57 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import mean_squared_error
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
 
 # Загрузка данных
 data = pd.read_csv("../Hostel.csv")
 
-features = ['price.from', 'Distance', 'atmosphere', 'cleanliness', 'facilities']
-
-# Очистка данных и заполнение пропущенных значений
+# Заполнение пропущенных значений
 data['Distance'] = data['Distance'].str.replace('km from city centre', '').astype(float)
 data['summary.score'] = data['summary.score'].fillna(data['summary.score'].mean())
+
+# Выбор нужных признаков
+features = ['price.from', 'Distance', 'atmosphere', 'cleanliness', 'facilities']
 target = 'summary.score'
-data[features] = data[features].fillna(data[features].mean())
 
-# Разделение данных
-train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
+# Категоризация рейтинга
+data['rating_category'] = pd.cut(data[target], bins=[0, 2, 4, 6, 7, 8, 9, 10],
+                                 labels=['Very Low', 'Low', 'Medium-Low', 'Medium', 'Medium-High', 'High', 'Very High'])
 
-X_train = train_data[features]
-y_train = train_data[target]
+# Разделение данных на обучающий и тестовый наборы
+X = data[features]
+y = data['rating_category']
 
-model = DecisionTreeRegressor(random_state=42)
-model.fit(X_train, y_train)
+# Заполнение пропущенных значений в X
+imputer = SimpleImputer(strategy='mean')
+X = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
 
-# Проверка работы модели
-X_test = test_data[features]
-y_test = test_data[target]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-predictions = model.predict(X_test)
+# Масштабирование данных (стандартизация)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-# Точность на основе средней квадратной ошибке (MSE)
-mse = mean_squared_error(y_test, predictions)
-accuracy = 1 - mse / y_test.var()
+# Использование DecisionTreeClassifier
+classifier = DecisionTreeClassifier(random_state=42)
+classifier.fit(X_train_scaled, y_train)
+
+# Предсказание на тестовом наборе
+y_pred = classifier.predict(X_test_scaled)
+
+# Оценка качества модели
+accuracy = accuracy_score(y_test, y_pred)
+
+# Вывод точности модели
 print(f"\nТочность модели: {accuracy * 100:.2f}%")
 
-importances = model.feature_importances_
-normalized_importances = importances / importances.sum()
+# Вывод трех наиболее важных признаков
+importances = classifier.feature_importances_
+indices = (-importances).argsort()[:3]
 
-# Выбор трёх наиболее важных признаков
-top_importances = normalized_importances.argsort()[-3:][::-1]
-print("\nТри наиболее важных признака:")
-for idx in top_importances:
-    print(f"{features[idx]}: {normalized_importances[idx]}")
+print("Наиболее важные признаки:")
+for f in range(3):
+    print(f"{features[indices[f]]}: {importances[indices[f]]}")

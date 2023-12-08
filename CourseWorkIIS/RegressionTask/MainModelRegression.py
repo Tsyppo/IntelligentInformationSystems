@@ -7,7 +7,6 @@ from sklearn.preprocessing import StandardScaler
 # Загрузка данных
 data = pd.read_csv("../Hostel.csv")
 
-# Выбор нужных признаков
 features = ['price.from', 'Distance', 'atmosphere', 'cleanliness', 'facilities']
 
 # Очистка данных и заполнение пропущенных значений
