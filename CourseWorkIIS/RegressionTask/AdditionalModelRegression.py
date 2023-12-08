@@ -4,7 +4,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error
 
 # Загрузка данных
-df = pd.read_csv("Hostel.csv")
+df = pd.read_csv("../Hostel.csv")
 df = df.fillna(0)
 # Разделение данных
 train_data, test_data = train_test_split(df, test_size=0.01, random_state=42)
