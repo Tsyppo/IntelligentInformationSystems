@@ -37,5 +37,6 @@ cluster_means1 = data.groupby('cluster').agg({'price.from': 'mean', 'Distance': 
                                               'cleanliness': 'mean'})
 cluster_means2 = data.groupby('cluster').agg({'facilities': 'mean', 'location.y': 'mean',
                                               'security': 'mean', 'staff': 'mean', 'valueformoney': 'mean'})
+print("Вывод средних значений для каждого кластера:")
 print("\n", cluster_means1)
 print("\n", cluster_means2)

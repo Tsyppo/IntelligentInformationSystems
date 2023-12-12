@@ -20,27 +20,27 @@ data['summary.score'] = data['summary.score'].fillna(data['summary.score'].mean(
 scaler = MinMaxScaler()
 scaled_features = scaler.fit_transform(features)
 
-# Параметры SOM
+# Параметры minisom
 grid_size = 10  # Размер сетки
 n_iterations = 1000  # Количество итераций обучения
 
 # Создание SOM
-som = MiniSom(grid_size, grid_size, scaled_features.shape[1], sigma=1.0, learning_rate=0.5)
+minisom = MiniSom(grid_size, grid_size, scaled_features.shape[1], sigma=1.0, learning_rate=0.5)
 
-# Инициализация весов SOM
-som.random_weights_init(scaled_features)
+# Инициализация весов minisom
+minisom.random_weights_init(scaled_features)
 
-# Обучение SOM
-som.train_random(scaled_features, n_iterations)
+# Обучение minisom
+minisom.train_random(scaled_features, n_iterations)
 
 # Получение карты активации (BMU - Best Matching Unit) для каждого образца
-activation_map = som.activation_response(scaled_features)
+activation_map = minisom.activation_response(scaled_features)
 
 # Определение кластера для каждого образца
 clusters = np.zeros(len(scaled_features))
 
 for i, sample in enumerate(scaled_features):
-    clusters[i] = np.argmin([np.linalg.norm(sample - weight) for weight in som.get_weights().reshape(-1, scaled_features.shape[1])])
+    clusters[i] = np.argmin([np.linalg.norm(sample - weight) for weight in minisom.get_weights().reshape(-1, scaled_features.shape[1])])
 
 # Визуализация карты активации
 plt.imshow(activation_map, cmap='Blues', interpolation='none')
